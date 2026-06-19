@@ -4,12 +4,22 @@ Use this 10-minute walkthrough for Upwork client demos.
 
 ## Before the demo
 
-1. Deploy to Vercel with all env vars set
-2. Run `npm run db:seed` or register a fresh account
-3. Configure Gmail + Gemini in Settings
-4. Import `public/sample-leads.csv` or use seeded data
+1. Deploy to Vercel — follow [DEPLOY.md](./DEPLOY.md)
+2. Set up **cron-job.org** (2 jobs, every 5 min) — see DEPLOY.md Step 4
+3. Run `npm run db:seed` against production DB or register a fresh account
+4. Configure Gmail + Gemini in Settings
+5. Import `public/sample-leads.csv` or use seeded data
+6. Verify cron: `npm run cron:test` with `APP_URL=https://your-app.vercel.app`
 
 **Demo login:** `demo@leadflow.app` / `demo123`
+
+### Pre-demo checklist
+
+- [ ] App loads at production HTTPS URL
+- [ ] Login works (`NEXTAUTH_URL` matches URL)
+- [ ] cron-job.org shows **200** for both jobs
+- [ ] Gmail + Gemini configured in Settings
+- [ ] At least one enriched lead exists
 
 ---
 
@@ -24,7 +34,7 @@ Use this 10-minute walkthrough for Upwork client demos.
 ### 2. Leads (2 min)
 
 - Open **Leads** → show list with search and status filter
-- Click a lead → show detail form, AI enrichment panel
+- Click a lead → show detail form, AI enrichment panel, **Conversation** thread
 - Click **Enrich This Lead** → show company description, pain points, ICP score
 - Mention tags, LinkedIn, location fields
 
@@ -36,7 +46,7 @@ Use this 10-minute walkthrough for Upwork client demos.
 ### 4. Create campaign (3 min)
 
 - **Campaigns** → **New Campaign**
-- Step 1: Name, description, send window, timezone
+- Step 1: Name, description, send window, timezone, **Reply handling** (Auto / Review / Stop)
 - Step 2: Email sequence with merge tags (`{{firstName}}`, `{{company}}`)
 - Use **Generate with AI** for one step
 - Step 3: Select enriched leads → **Create Campaign**
@@ -44,9 +54,10 @@ Use this 10-minute walkthrough for Upwork client demos.
 ### 5. Launch & track (2 min)
 
 - Open campaign detail → **Launch**
-- Explain: emails queue, cron sends every 5 min within send window
+- Explain: emails queue; **cron-job.org** triggers send every 5 min within send window
 - Show stats: sent, open rate, click rate, reply rate
 - Tabs: Leads progress, Sequence, Settings
+- **Replies** page for AI draft review (if campaign uses Review mode)
 
 ### 6. Security & compliance (1 min)
 
@@ -61,15 +72,19 @@ Use this 10-minute walkthrough for Upwork client demos.
 
 - "Merge tags personalize each email automatically"
 - "Send windows respect business hours in any timezone"
-- "Reply detection via IMAP cancels follow-up emails"
+- "Reply detection via IMAP — AI can auto-respond or draft for your review"
 - "Production-ready security: rate limits, CORS, encrypted secrets"
-- "Built on modern stack: Next.js, PostgreSQL, Vercel"
+- "Hosted on Vercel with external cron — no Pro plan required for scheduling"
 
 ## Troubleshooting live demo
 
 | Issue | Fix |
 |-------|-----|
-| Emails not sending | Check Gmail app password in Settings; verify cron is running |
+| Emails not sending | Gmail app password in Settings; cron-job.org running; campaign ACTIVE |
+| Cron 401 | `CRON_SECRET` must match Vercel + cron-job.org header |
 | AI enrichment fails | Add Gemini key in Settings or env |
-| Rate limit error | Upstash Redis env vars missing |
+| Rate limit error | Add Upstash vars or leave empty to disable |
 | Tracking links broken | Set `NEXT_PUBLIC_APP_URL` to production URL |
+| Replies not showing | Wait 5+ min; check cron-job.org history for check-replies |
+
+See [DEPLOY.md](./DEPLOY.md) for full deployment troubleshooting.

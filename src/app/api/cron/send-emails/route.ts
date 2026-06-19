@@ -8,6 +8,10 @@ import { getNextSendSlot, isWithinSendWindow } from "@/lib/send-window"
 import { decryptSettingsSecrets } from "@/lib/settings-secrets"
 import { verifyCronSecret } from "@/lib/security"
 
+export const runtime = "nodejs"
+export const maxDuration = 60
+export const dynamic = "force-dynamic"
+
 export async function GET(request: Request) {
   if (!verifyCronSecret(request)) {
     return new NextResponse("Unauthorized", { status: 401 })

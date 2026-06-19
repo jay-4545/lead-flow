@@ -10,7 +10,10 @@
     "db:push": "prisma db push",
     "db:seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "cron:send": "node scripts/trigger-cron.mjs send-emails",
+    "cron:replies": "node scripts/trigger-cron.mjs check-replies",
+    "cron:test": "node scripts/trigger-cron.mjs all"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
