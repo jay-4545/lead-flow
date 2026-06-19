@@ -1,0 +1,6 @@
+firstName,lastName,email,company,jobTitle,website,industry,location
+John,Smith,john.smith@acmecorp.com,Acme Corp,CEO,https://acmecorp.com,SaaS,"San Francisco, CA"
+Sarah,Johnson,sarah.j@brightmedia.io,Bright Media,Founder,https://brightmedia.io,Marketing Agency,"New York, NY"
+Michael,Chen,m.chen@shopwave.co,ShopWave,Co-Founder,https://shopwave.co,eCommerce,"Austin, TX"
+Emma,Williams,emma@scaleconsult.com,Scale Consulting,Managing Partner,https://scaleconsult.com,Consulting,"London, UK"
+David,Garcia,d.garcia@launchpad.ai,LaunchPad AI,Head of Growth,https://launchpad.ai,SaaS,"Miami, FL"

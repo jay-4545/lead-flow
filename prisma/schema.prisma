@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  password      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  leads         Lead[]
+  campaigns     Campaign[]
+  settings      Settings?
+  inboundReplies InboundReply[]
+}
+
+model Settings {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  geminiKey    String?
+  gmailUser    String?
+  gmailAppPass String?
+  fromName     String?
+  fromEmail    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Lead {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  firstName    String
+  lastName     String
+  email        String
+  company      String?
+  jobTitle     String?
+  website      String?
+  linkedinUrl  String?
+  location     String?
+  industry     String?
+
+  isEnriched   Boolean     @default(false)
+  enrichedAt   DateTime?
+  companyDesc  String?     @db.Text
+  painPoints   String?     @db.Text
+  icpScore     Int?
+  enrichNotes  String?     @db.Text
+
+  status       LeadStatus  @default(NEW)
+  tags         String[]
+  notes        String?     @db.Text
+  unsubscribeToken String?  @unique
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  campaignLeads  CampaignLead[]
+  emailLogs      EmailLog[]
+  inboundReplies InboundReply[]
+
+  @@unique([userId, email])
+}
+
+model Campaign {
+  id               String         @id @default(cuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id])
+  name             String
+  description      String?
+  status           CampaignStatus @default(DRAFT)
+  fromEmail        String?
+  fromName         String?
+  sendingDays      String[]
+  sendingStartHour Int            @default(9)
+  sendingEndHour   Int            @default(17)
+  timezone         String             @default("UTC")
+  replyMode        CampaignReplyMode  @default(DISABLED)
+  launchedAt       DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  steps            CampaignStep[]
+  campaignLeads    CampaignLead[]
+  emailLogs        EmailLog[]
+  inboundReplies   InboundReply[]
+}
+
+model CampaignStep {
+  id            String     @id @default(cuid())
+  campaignId    String
+  campaign      Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  stepNumber    Int
+  subject       String
+  body          String     @db.Text
+  delayDays     Int        @default(0)
+  isAiGenerated Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  emailLogs     EmailLog[]
+}
+
+model CampaignLead {
+  id          String             @id @default(cuid())
+  campaignId  String
+  campaign    Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  leadId      String
+  lead        Lead               @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  status      CampaignLeadStatus @default(PENDING)
+  currentStep Int                @default(0)
+  addedAt     DateTime           @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  repliedAt   DateTime?
+
+  @@unique([campaignId, leadId])
+}
+
+model EmailLog {
+  id              String        @id @default(cuid())
+  campaignId      String?
+  campaign        Campaign?     @relation(fields: [campaignId], references: [id])
+  stepId          String?
+  step            CampaignStep? @relation(fields: [stepId], references: [id])
+  leadId          String
+  lead            Lead          @relation(fields: [leadId], references: [id])
+
+  subject         String
+  body            String        @db.Text
+  fromEmail       String
+  toEmail         String
+
+  status          EmailStatus   @default(QUEUED)
+  scheduledFor    DateTime
+  sentAt          DateTime?
+
+  openedAt        DateTime?
+  openCount       Int           @default(0)
+  clickedAt       DateTime?
+  clickCount      Int           @default(0)
+  repliedAt       DateTime?
+  bouncedAt       DateTime?
+
+  openTrackToken  String        @unique @default(cuid())
+  clickTrackToken String        @unique @default(cuid())
+  messageId       String?       @unique
+  isAiReply       Boolean       @default(false)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  inboundReply         InboundReply? @relation("OriginalEmail")
+  responseForInbound   InboundReply? @relation("ResponseEmail")
+}
+
+model InboundReply {
+  id                  String             @id @default(cuid())
+  emailLogId          String             @unique
+  emailLog            EmailLog           @relation("OriginalEmail", fields: [emailLogId], references: [id])
+  leadId              String
+  lead                Lead               @relation(fields: [leadId], references: [id])
+  campaignId          String?
+  campaign            Campaign?          @relation(fields: [campaignId], references: [id])
+  userId              String
+  user                User               @relation(fields: [userId], references: [id])
+
+  fromEmail           String
+  subject             String
+  body                String             @db.Text
+  receivedAt          DateTime
+
+  intent              String?
+  aiSubject           String?
+  aiBody              String?            @db.Text
+  aiReasoning         String?            @db.Text
+  status              InboundReplyStatus @default(PENDING_REVIEW)
+
+  responseEmailLogId  String?            @unique
+  responseEmailLog    EmailLog?          @relation("ResponseEmail", fields: [responseEmailLogId], references: [id])
+
+  reviewedAt          DateTime?
+  reviewedBy          String?
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  REPLIED
+  INTERESTED
+  NOT_INTERESTED
+  CONVERTED
+  UNSUBSCRIBED
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum CampaignLeadStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  UNSUBSCRIBED
+  REPLIED
+  BOUNCED
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  OPENED
+  CLICKED
+  REPLIED
+  BOUNCED
+  FAILED
+}
+
+enum CampaignReplyMode {
+  DISABLED
+  AUTO
+  REVIEW
+}
+
+enum InboundReplyStatus {
+  PENDING_REVIEW
+  APPROVED
+  SENT
+  SKIPPED
+}
